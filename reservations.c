@@ -8,7 +8,7 @@
 #include "tables.h"
 #include "reservations.h"
 
-static void confirmReservation(Restaurant* r, Table* t, const char* timeStr) {   //Pomocná funkce (v2): zapíše rezervaci do stolu
+static void confirmReservation(Restaurant* r, Table* t, const char* timeStr) {   //zapíše rezervaci ke stolu
     t->isReserved = 1;
     t->reservationNumber = generateReservationCode(r);
     strcpy(t->time, timeStr);
@@ -18,33 +18,31 @@ static void confirmReservation(Restaurant* r, Table* t, const char* timeStr) {  
     saveTables(r);
 }
 
-void manualReservation(Restaurant* r) {     //Funkce pro manuální zadání rezervace s kontrolou dostupnosti
-    int personCount, c;
-    char timeStr[TIME_LEN];
-    int chosenTableId;
+int readReservationInput(Restaurant* r, int* personCount, char* timeStr) {   //načte počet osob a čas příchodu; vrací 0, pokud není žádný volný stůl
+    int c;
     const char* num = "0123456789";         //Stock ciselne pole na kontrolu syntaxe 
 
-	if (largestFreeTable(r) == 0) {            //Kontrola, zda je vůbec volný stůl
-		printf("Vsechny stoly jsou obsazeny, nelze provest rezervaci.\n");
-		r->upperUIScale += 1;
-		return;
-	}
+    if (largestFreeTable(r) == 0) {            //Kontrola, zda je vůbec volný stůl
+        printf("Vsechny stoly jsou obsazeny, nelze provest rezervaci.\n");
+        r->upperUIScale += 1;
+        return 0;
+    }
 
     while (1) {
         while ((c = getchar()) != '\n' && c != EOF);                    //Vyprazdnit zasobnik - jinak nekonecny whileloop
-        printf("Pocet osob: ");      
-        scanf("%d", &personCount);
-        if (personCount < 0) {
+        printf("Pocet osob: ");
+        scanf("%d", personCount);
+        if (*personCount < 0) {
             system("cls");
             r->upperUIScale = 1;
             printf("Neplatny pocet osob, zkuste to znovu.\n");
             continue;
         }
 
-        if (personCount > largestFreeTable(r)) {                //Check proti zacykleni, jestli je vubec misto pro tolik osob
+        if (*personCount > largestFreeTable(r)) {               //Check proti zacykleni, jestli je vubec misto pro tolik osob
             system("cls");
             r->upperUIScale = 1;
-            printf("Neni k dispozici stul pro %d osob, zkuste to znovu.\n", personCount);
+            printf("Neni k dispozici stul pro %d osob, zkuste to znovu.\n", *personCount);
             continue;
         }
 
@@ -57,7 +55,17 @@ void manualReservation(Restaurant* r) {     //Funkce pro manuální zadání rez
             printf("Neplatny cas prichodu, zkuste to znovu.\n");
             continue;
         }
-        break;
+        return 1;
+    }
+}
+
+void manualReservation(Restaurant* r) {     //Funkce pro manuální zadání rezervace s kontrolou dostupnosti
+    int personCount;
+    char timeStr[TIME_LEN];
+    int chosenTableId;
+
+    if (!readReservationInput(r, &personCount, timeStr)) {
+        return;
     }
 
     system("cls");
@@ -99,44 +107,11 @@ void manualReservation(Restaurant* r) {     //Funkce pro manuální zadání rez
 }
 
 void autoReservation(Restaurant* r) {
-    int personCount, c;
+    int personCount;
     char timeStr[TIME_LEN];
-    const char* num = "0123456789";         //Stock ciselne pole na kontrolu syntaxe 
 
-    if (largestFreeTable(r) == 0) {            //Kontrola, zda je vůbec volný stůl
-        printf("Vsechny stoly jsou obsazeny, nelze provest rezervaci.\n");
-        r->upperUIScale += 1;
+    if (!readReservationInput(r, &personCount, timeStr)) {
         return;
-    }
-
-    while (1) {
-        while ((c = getchar()) != '\n' && c != EOF);
-        printf("Pocet osob: ");
-        scanf("%d", &personCount);
-        if (personCount < 0) {
-            system("cls");
-            r->upperUIScale = 1;
-            printf("Neplatny pocet osob, zkuste to znovu.\n");
-            continue;
-        }
-
-		if (personCount > largestFreeTable(r)) {                //Check proti zacykleni, jestli je vubec misto pro tolik osob
-			system("cls");
-			r->upperUIScale = 1;
-			printf("Neni k dispozici stul pro %d osob, zkuste to znovu.\n", personCount);
-			continue;
-		}
-
-        printf("Cas prichodu (HH:MM): ");
-        scanf("%5s", timeStr);
-        if (!(strspn(timeStr, num) == 2 && timeStr[2] == ':' &&           //kontrola syntaxe vstupu; když neprojde, opakuj
-            strspn(timeStr + 3, num) == 2)) {
-            system("cls");
-            r->upperUIScale = 1;
-            printf("Neplatny cas prichodu, zkuste to znovu.\n");
-            continue;
-        }
-        break;
     }
 
     Table* bestTable = NULL;    //Ukazatel na nejlepší stůl, NULL = zatím žádný nemáme
@@ -152,15 +127,15 @@ void autoReservation(Restaurant* r) {
         }
     }
 
-        confirmReservation(r, bestTable, timeStr);
-        r->upperUIScale = 5;
+    confirmReservation(r, bestTable, timeStr);
+    r->upperUIScale = 5;
     return;
 }
 
 void modifyReservation(Restaurant* r) {     //Funkce pro úpravu času nebo mazání rezervace
     int code, choice;
 
-	printTables(r);
+    printTables(r);
 
     printf("Zadejte rezervacni kod: ");
     scanf("%d", &code);
