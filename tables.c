@@ -113,7 +113,7 @@ void saveTables(Restaurant* r) {                    //Funkce pro uložení stol�
 }
 
 void printTables(Restaurant* r) {                   //Funkce pro výpis jednotlivých stolů
-    printf("Stav stolu (%s) \n", r->currentFile);
+    printf("Stav stolu (%.2s.%.2s.%.4s)\n", r->currentDay, r->currentDay + 2, r->currentDay + 4);     //Výpis data
     for (int i = 0; i < r->currentTableCount; i++) {
         Table* t = &r->tables[i];
         printf("Stul %d | Kapacita: %d | ", t->id, t->capacity);
@@ -126,7 +126,7 @@ void printTables(Restaurant* r) {                   //Funkce pro výpis jednotli
     }
     printf("--------------------------\n");
 
-    r->upperUIScale = r->upperUIScale + 8;
+    r->upperUIScale = r->upperUIScale + r->currentTableCount + 2;
 }
 
 

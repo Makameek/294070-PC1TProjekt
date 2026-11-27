@@ -7,5 +7,6 @@ void manualReservation(Restaurant* r);      // Manuální rezervace s kontrolou 
 void autoReservation(Restaurant* r);        // Automatický výběr stolu podle počtu osob
 void modifyReservation(Restaurant* r);      // Zrušení nebo posunutí rezervace
 int generateReservationCode(Restaurant* r);             // Generování unikátního rezervačního kódu
+int largestFreeTable(const Restaurant* r);	//Funkce pro zjisteni mist u nejvetsiho volneho stolu - check proti nekonecnym loopum
 
 #endif
